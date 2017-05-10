@@ -23,10 +23,12 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
+        data = global.data,
+        config = global.config,
         lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
+    canvas.width = config.spriteWidth * config.numCols;
+    canvas.height = config.spriteHeight * config.numRows + 108;
     doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -108,16 +110,23 @@ var Engine = (function(global) {
          * for that particular row of the game level.
          */
         var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
+                // 'images/water-block.png',   // Top row is water
+                // 'images/stone-block.png',   // Row 1 of 3 of stone
+                // 'images/stone-block.png',   // Row 2 of 3 of stone
+                // 'images/stone-block.png',   // Row 3 of 3 of stone
+                // 'images/grass-block.png',   // Row 1 of 2 of grass
+                // 'images/grass-block.png'    // Row 2 of 2 of grass
             ],
-            numRows = 6,
-            numCols = 5,
+            numRows = config.numRows,
+            numCols = config.numCols,
             row, col;
+
+        rowImages.push('images/water-block.png');
+        for (var i = 0; i < numRows - 3; i++) {
+            rowImages.push('images/stone-block.png');
+        }
+        rowImages.push('images/grass-block.png');
+        rowImages.push('images/grass-block.png');
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
@@ -132,7 +141,7 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                ctx.drawImage(Resources.get(rowImages[row]), col * config.spriteWidth, row * config.spriteHeight);
             }
         }
 
@@ -144,6 +153,25 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
+        ctx.font="24pt verdana"
+        // Render level
+        ctx.fillStyle = "white";
+        var difficultyStr = data.difficulty[config.difficultyLevel];
+        ctx.fillText(difficultyStr, 380, 90);
+
+        // Render score
+        if (data.score > 0 ) {
+            ctx.fillStyle = "gold";
+        } else {
+            ctx.fillStyle = "red";
+        }
+        ctx.fillText(data.score, 10, 90);
+
+        // Render gems
+        data.gems.forEach(function(gem) {
+            ctx.drawImage(Resources.get(gem.name), gem.col * config.spriteWidth, gem.row * config.spriteHeight + config.playerPosOffset);
+        });
+
         /* Loop through all of the objects within the allEnemies array and call
          * the render function you have defined.
          */
@@ -159,7 +187,10 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        data.genareteGem();
+        var howToPlay = doc.createElement('div');
+        howToPlay.innerHTML = '<h3>Control keys</h3><b>"[" or "]":</b> Change Player\'s Character<br><b>"Enter":</b> Change Difficulty<br><b>"Arrows"</b>: Move';
+        global.document.body.appendChild(howToPlay);
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -167,11 +198,19 @@ var Engine = (function(global) {
      * all of these images are properly loaded our game will start.
      */
     Resources.load([
+        'images/Rock.png',
+        'images/Gem Blue.png',
+        'images/Gem Green.png',
+        'images/Gem Orange.png',
         'images/stone-block.png',
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/char-cat-girl.png',
+        'images/char-horn-girl.png',
+        'images/char-pink-girl.png',
+        'images/char-princess-girl.png'
     ]);
     Resources.onReady(init);
 
